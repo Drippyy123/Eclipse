@@ -52,7 +52,8 @@ def print_banner():
    ░  ░░ ░          ░  ░ ░                 ░     ░  ░
        ░                                                 """
     print(banner)
-    print("    [+] Simple File Encryption/Decryption Tool [+]\n")
+    print("    [+] Version Beta 1.0 [+]\n")
+    print("    [+] Author 404.ecl1pse on Discord [+]\n")
     print("       1) Generate Key")
     print("       2) Encrypt File")
     print("       3) Decrypt File")
