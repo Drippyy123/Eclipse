@@ -1,69 +1,97 @@
 import os
-import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import Tk, Label, Button, Text, END
 from cryptography.fernet import Fernet
 
-def generate_key():
-    key = Fernet.generate_key()
-    with open("secret.key", "wb") as key_file:
-        key_file.write(key)
-    messagebox.showinfo("Success", "Key generated and saved as 'secret.key'.")
+# ASCII art banner
+BANNER = r"""
+███████╗ ██████╗██╗     ██╗██████╗ ███████╗███████╗   ██╗   ██╗███████╗██╗
+██╔════╝██╔════╝██║     ██║██╔══██╗██╔════╝██╔════╝   ██║   ██║██╔════╝██║
+███████╗██║     ██║     ██║██████╔╝█████╗  ███████╗   ██║   ██║███████╗██║
+╚════██║██║     ██║     ██║██╔══██╗██╔══╝  ╚════██║   ╚██╗ ██╔╝╚════██║╚═╝
+███████║╚██████╗███████╗██║██║  ██║███████╗███████║    ╚████╔╝ ███████║██╗
+╚══════╝ ╚═════╝╚══════╝╚═╝╚═╝  ╚═╝╚══════╝╚══════╝     ╚═══╝  ╚══════╝╚═╝
+"""
 
-def load_key():
-    return open("secret.key", "rb").read()
+# Main application class
+class FileEncryptorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("ECLIPSE File Encryptor/Decryptor")
+        
+        # Display banner
+        self.banner_label = Label(root, text=BANNER, font=("Consolas", 14), fg="magenta")
+        self.banner_label.pack(pady=5)
 
-def encrypt_file():
-    file_name = filedialog.askopenfilename(title="Select a file to encrypt")
-    if file_name:
-        key = load_key()
-        fernet = Fernet(key)
+        # Create UI elements
+        self.create_widgets()
 
-        with open(file_name, "rb") as file:
-            file_data = file.read()
+    def create_widgets(self):
+        # Generate key button
+        self.gen_key_button = Button(self.root, text="Generate Key", command=self.generate_key)
+        self.gen_key_button.pack(pady=5)
 
-        encrypted_data = fernet.encrypt(file_data)
+        # Encrypt file button
+        self.enc_file_button = Button(self.root, text="Encrypt File", command=self.encrypt_file)
+        self.enc_file_button.pack(pady=5)
 
-        with open(file_name, "wb") as file:
-            file.write(encrypted_data)
+        # Decrypt file button
+        self.dec_file_button = Button(self.root, text="Decrypt File", command=self.decrypt_file)
+        self.dec_file_button.pack(pady=5)
 
-        messagebox.showinfo("Success", f"{file_name} has been encrypted.")
+        # Status display
+        self.status_text = Text(self.root, height=8, width=50)
+        self.status_text.pack(pady=5)
+        self.status_text.insert(END, "[+] ECLIPSE V2 ready.\n")
 
-def decrypt_file():
-    file_name = filedialog.askopenfilename(title="Select a file to decrypt")
-    if file_name:
-        key = load_key()
-        fernet = Fernet(key)
+    def generate_key(self):
+        key = Fernet.generate_key()
+        with open("secret.key", "wb") as key_file:
+            key_file.write(key)
+        self.update_status("[+] Key generated and saved as 'secret.key'.\n")
 
-        with open(file_name, "rb") as file:
-            encrypted_data = file.read()
+    def load_key(self):
+        try:
+            return open("secret.key", "rb").read()
+        except FileNotFoundError:
+            self.update_status("[!] Error: 'secret.key' not found.\n")
+            return None
 
-        decrypted_data = fernet.decrypt(encrypted_data)
+    def encrypt_file(self):
+        file_name = "testfile.txt"  # Replace with actual file selection logic
+        if os.path.exists(file_name):
+            key = self.load_key()
+            if key:
+                fernet = Fernet(key)
+                with open(file_name, "rb") as file:
+                    file_data = file.read()
+                encrypted_data = fernet.encrypt(file_data)
+                with open(file_name, "wb") as file:
+                    file.write(encrypted_data)
+                self.update_status(f"[+] {file_name} has been encrypted.\n")
+        else:
+            self.update_status(f"[!] Error: File '{file_name}' does not exist.\n")
 
-        with open(file_name, "wb") as file:
-            file.write(decrypted_data)
+    def decrypt_file(self):
+        file_name = "testfile.txt"  # Replace with actual file selection logic
+        if os.path.exists(file_name):
+            key = self.load_key()
+            if key:
+                fernet = Fernet(key)
+                with open(file_name, "rb") as file:
+                    encrypted_data = file.read()
+                decrypted_data = fernet.decrypt(encrypted_data)
+                with open(file_name, "wb") as file:
+                    file.write(decrypted_data)
+                self.update_status(f"[+] {file_name} has been decrypted.\n")
+        else:
+            self.update_status(f"[!] Error: File '{file_name}' does not exist.\n")
 
-        messagebox.showinfo("Success", f"{file_name} has been decrypted.")
+    def update_status(self, message):
+        self.status_text.insert(END, message)
+        self.status_text.see(END)
 
-def create_ui():
-    root = tk.Tk()
-    root.title("File Encryptor/Decryptor")
-
-    label = tk.Label(root, text="File Encryptor/Decryptor", font=("Arial", 16))
-    label.pack(pady=10)
-
-    generate_key_button = tk.Button(root, text="Generate Key", command=generate_key)
-    generate_key_button.pack(pady=5)
-
-    encrypt_file_button = tk.Button(root, text="Encrypt File", command=encrypt_file)
-    encrypt_file_button.pack(pady=5)
-
-    decrypt_file_button = tk.Button(root, text="Decrypt File", command=decrypt_file)
-    decrypt_file_button.pack(pady=5)
-
-    exit_button = tk.Button(root, text="Exit", command=root.quit)
-    exit_button.pack(pady=20)
-
-    root.mainloop()
 
 if __name__ == "__main__":
-    create_ui()
+    root = Tk()
+    app = FileEncryptorApp(root)
+    root.mainloop()
